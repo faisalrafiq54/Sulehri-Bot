@@ -2,6 +2,11 @@ import os
 from flask import Flask, render_template_string
 import threading, random, time
 from datetime import datetime
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
+
+# --- آپ کا ٹوکن Render سے لے گا ---
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 app = Flask(__name__)
 signals = []
@@ -39,5 +44,22 @@ def gen():
             if len(signals)>50: signals.pop(0)
         time.sleep(12)
 
+# --- TELEGRAM BOT PART ---
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("✅ Sulehri Bot Live hai!\n\n💎 Latest Signals dekhne ke liye website kholen:\nhttps://sulehri-bot.onrender.com\n\nBot har 12 sec me signal generate kar raha hai.")
+
+def run_telegram():
+    if not BOT_TOKEN:
+        print("BOT TOKEN NAHI MILA!")
+        return
+    application = Application.builder().token(BOT_TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    print("Telegram Bot Starting...")
+    application.run_polling()
+
+# --- DONO KO SATH CHALANA ---
 threading.Thread(target=gen, daemon=True).start()
-if __name__=='__main__': app.run(host='0.0.0.0', port=10000)
+threading.Thread(target=run_telegram, daemon=True).start()
+
+if __name__=='__main__': 
+    app.run(host='0.0.0.0', port=10000)
